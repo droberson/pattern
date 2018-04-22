@@ -51,6 +51,8 @@ int getendian() {
 }
 
 
+/* pattern_create() -- Creates pattern.
+ */
 char *pattern_create(unsigned int length) {
   // TODO: This currently wraps the pattern around at 20280 bytes.
   //       Print 'A' * multiples of 20280 + pattern so only the last
@@ -92,13 +94,69 @@ char *pattern_create(unsigned int length) {
 }
 
 
+/* pattern_offset() - Calculate and output offset.
+ */
+void pattern_offset(const char *pattern, const char *offset) {
+  int         i, x;
+  int         offsetlen;
+  char        curhex[2];
+  char        *hexoffset = NULL;
+  char        *optr;
+  char        byte;
+
+
+  curhex[2] = '\0';
+
+  if (offset[0] == '0' && offset[1] == 'x') {
+    offsetlen = (strlen(offset) - 2) / 2;
+    hexoffset = malloc(offsetlen);
+    if (hexoffset == NULL) {
+      perror("malloc()");
+      exit(EXIT_FAILURE);
+    }
+
+    for(x = 0, i = 2; i < strlen(offset); x++, i += 2) {
+      if (strlen(offset) % 2 == 1 && i == 2) {
+        /* Offset length is odd. Assume that the missing byte
+         * is 0 (Ex: 0xf == 0x0f) and realign the incrementor.
+         */
+        curhex[0] = '0';
+        curhex[1] = offset[i];
+        i--;
+      } else {
+        curhex[0] = offset[i];
+        curhex[1] = offset[i + 1];
+      }
+
+      byte = strtol(curhex, NULL, 16);
+      if (endian == 0)
+        hexoffset[offsetlen - x - 1] = byte;
+      else
+        hexoffset[x] = byte;
+    }
+  }
+
+  if (hexoffset)
+    offset = hexoffset;
+
+  optr = strstr(pattern, offset);
+  if (optr != NULL)
+    printf("%ld\n", optr - pattern);
+  else
+    printf("not found\n");
+
+  if (hexoffset)
+    free(hexoffset);
+}
+
+
+/* main() -- Program's entry point.
+ */
 int main(int argc, char *argv[]) {
   int             opt;
   int             len;
   char            *p;
-  char            *o;
   char            *offset = NULL;
-  char            *buf = NULL;
 
   endian = getendian();
   if (endian == -1) {
@@ -135,52 +193,8 @@ int main(int argc, char *argv[]) {
 
   p = pattern_create(len);
 
-  // TODO: split this into its own function.
   if (offset != NULL) {
-    int i, x, offsetlen;
-    char *hexbyte;
-    char curhex[2];
-
-    curhex[2] = '\0';
-
-    if (offset[0] == '0' && offset[1] == 'x') {
-      offsetlen = (strlen(offset) - 2) / 2;
-      buf = malloc(offsetlen);
-      if (buf == NULL) {
-        perror("malloc()");
-        return EXIT_FAILURE;
-      }
-
-      for(x = 0, i = 2; i < strlen(offset); x++, i += 2) {
-        if (strlen(offset) % 2 == 1 && i == 2) {
-          /* Offset length is odd. Assume that the missing byte
-           * is 0 (Ex: 0xf == 0x0f) and realign the incrementor.
-           */
-          curhex[0] = '0';
-          curhex[1] = offset[i];
-          i--;
-        } else {
-          curhex[0] = offset[i];
-          curhex[1] = offset[i + 1];
-        }
-
-        if (endian == 0)
-          buf[offsetlen - x - 1] = strtol(curhex, &hexbyte, 16);
-        else
-          buf[x] = strtol(curhex, &hexbyte, 16);
-      }
-    }
-
-    if (buf) {
-      offset = buf;
-    }
-    o = strstr(p, offset);
-    if (o != NULL)
-      printf("%ld\n", o - p);
-    else
-      printf("not found\n");
-
-    free(buf);
+    pattern_offset(p, offset);
   } else {
     printf("%s\n", p);
   }

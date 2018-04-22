@@ -23,7 +23,9 @@
 #include <string.h>
 
 
+/* Global variables */
 int endian;
+
 
 /* getendian() -- Determine endianness of machine.
  *
@@ -101,7 +103,7 @@ int main(int argc, char *argv[]) {
   endian = getendian();
   if (endian == -1) {
     fprintf(stderr, "Unable to determine endianness. Toggle with -e\n");
-    endian = 0; // default to little
+    endian = 0; /* default to little endian */
   }
 
   while((opt = getopt(argc, argv, "eo:")) != -1) {

@@ -22,7 +22,72 @@
 #include <unistd.h>
 #include <string.h>
 
-char *pattern_create(unsigned int);
+
+int endian;
+
+/* getendian() -- Determine endianness of machine.
+ *
+ * Returns:
+ *    1 if big endian
+ *    0 if little endian
+ *    -1 if something went wrong
+ */
+int getendian() {
+  union {
+    unsigned int    i;
+    unsigned char   x[4];
+  } u;
+
+  u.i = 0xAABBCCDD;
+
+  if (u.x[0] == 0xAA)
+    return 1;
+  else if (u.x[0] == 0xDD)
+    return 0;
+
+  return -1;
+}
+
+
+char *pattern_create(unsigned int length) {
+  // TODO: This currently wraps the pattern around at 20280 bytes.
+  //       Print 'A' * multiples of 20280 + pattern so only the last
+  //       portion gets the pattern. Otherwise, pattern matches will
+  //       not be correct.
+  int             i;
+  char            x[] = "Aa0";
+  char            *out;
+
+  out = malloc(length);
+  if (out == NULL) {
+    perror("malloc()");
+    exit(EXIT_FAILURE);
+  }
+
+  for (i = 0; i < length; i++) {
+    out[i] = x[i % 3];
+
+    if (i % 3 == 0) {
+      x[2]++;
+
+      if ((i % 10 == 0)) {
+        x[2] = '0';
+        x[1]++;
+      }
+
+      if ((i % (10 * 26) == 0)) {
+        x[1] = 'a';
+        x[0]++;
+      }
+
+      if ((i % (10 * 26 * 26)) == 0) {
+        x[0] = 'A';
+      }
+    }
+  }
+
+  return out;
+}
 
 
 int main(int argc, char *argv[]) {
@@ -33,10 +98,18 @@ int main(int argc, char *argv[]) {
   char            *offset = NULL;
   char            *buf = NULL;
 
+  endian = getendian();
+  if (endian == -1) {
+    fprintf(stderr, "Unable to determine endianness. Toggle with -e\n");
+    endian = 0; // default to little
+  }
 
-  while((opt = getopt(argc, argv, "o:")) != -1) {
+  while((opt = getopt(argc, argv, "eo:")) != -1) {
     switch(opt) {
-      case 'o':
+      case 'e': /* toggle endianness */
+        endian = endian ? 0 : 1;
+        break;
+      case 'o': /* offset in ASCII or Hexadecimal */
         offset = optarg;
         break;
       default:
@@ -54,7 +127,7 @@ int main(int argc, char *argv[]) {
 
   len = atoi(argv[0]);
   if (len == 0) {
-    fprintf(stderr, "length must be greater than zero.\n");
+    fprintf(stderr, "Length must be greater than zero.\n");
     return EXIT_FAILURE;
   }
 
@@ -109,45 +182,5 @@ int main(int argc, char *argv[]) {
   }
 
   return EXIT_SUCCESS;
-}
-
-char *pattern_create(unsigned int length) {
-  // TODO: This currently wraps the pattern around at 20280 bytes.
-  //       Print 'A' * multiples of 20280 + pattern so only the last
-  //       portion gets the pattern. Otherwise, pattern matches will
-  //       not be correct.
-  int             i;
-  char            x[] = "Aa0";
-  char            *out;
-
-  out = malloc(length);
-  if (out == NULL) {
-    perror("malloc()");
-    exit(EXIT_FAILURE);
-  }
-
-  for (i = 0; i < length; i++) {
-    out[i] = x[i % 3];
-
-    if (i % 3 == 0) {
-      x[2]++;
-
-      if ((i % 10 == 0)) {
-        x[2] = '0';
-        x[1]++;
-      }
-
-      if ((i % (10 * 26) == 0)) {
-        x[1] = 'a';
-        x[0]++;
-      }
-
-      if ((i % (10 * 26 * 26)) == 0) {
-        x[0] = 'A';
-      }
-    }
-  }
-
-  return out;
 }
 

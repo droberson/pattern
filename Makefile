@@ -1,5 +1,11 @@
+# Makefile for pattern
+#
+
+CC = gcc
+CFLAGS = -Wall -O2
+
 pattern:
-	gcc -Wall -o pattern pattern.c
+	${CC} ${CFLAGS} -o pattern pattern.c
 
 clean:
 	rm -rf pattern *~

@@ -14,6 +14,9 @@
  *
  *   pattern -o 0x41643841
  *   114
+ *
+ * TODO malloc() wrapper
+ * TODO usage() function
  */
 
 #include <ctype.h>
@@ -52,12 +55,9 @@ int getendian() {
 
 
 /* pattern_create() -- Creates pattern.
+ * TODO
  */
 char *pattern_create(unsigned int length) {
-  // TODO: This currently wraps the pattern around at 20280 bytes.
-  //       Print 'A' * multiples of 20280 + pattern so only the last
-  //       portion gets the pattern. Otherwise, pattern matches will
-  //       not be correct.
   int             i;
   char            x[] = "Aa0";
   char            *out;
@@ -95,19 +95,21 @@ char *pattern_create(unsigned int length) {
 
 
 /* pattern_offset() - Calculate and output offset.
+ * TODO
  */
 void pattern_offset(const char *pattern, const char *offset) {
   int         i, x;
-  int         offsetlen;
-  char        curhex[2];
   char        *hexoffset = NULL;
   char        *optr;
-  char        byte;
 
 
-  curhex[2] = '\0';
-
+  /* If offset begins with "0x", convert hex to ASCII */
   if (offset[0] == '0' && offset[1] == 'x') {
+    int       offsetlen;
+    char      curhex[2];
+    char      byte;
+
+    curhex[2] = '\0';
     offsetlen = (strlen(offset) - 2) / 2;
     hexoffset = malloc(offsetlen);
     if (hexoffset == NULL) {
@@ -136,6 +138,13 @@ void pattern_offset(const char *pattern, const char *offset) {
     }
   }
 
+  /* Do simple pointer arithmetic to calculate offset.
+   *
+   * TODO this might be a better location than pattern_create() deal with
+   * the pattern wrapping after 20280 bytes. Rather than creating a pattern
+   * with the last 20280 bytes patterned: AAAA...PATTERN, display the last
+   * matching pattern's offset.
+   */
   if (hexoffset)
     offset = hexoffset;
 

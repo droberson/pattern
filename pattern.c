@@ -106,7 +106,7 @@ void pattern_offset(const char *pattern, const char *offset) {
   /* If offset begins with "0x", convert hex to ASCII */
   if (offset[0] == '0' && offset[1] == 'x') {
     int       offsetlen;
-    char      curhex[2];
+    char      curhex[3];
     char      byte;
 
     curhex[2] = '\0';

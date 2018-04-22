@@ -17,10 +17,13 @@
  *
  * TODO malloc() wrapper
  * TODO usage() function
+ * TODO License
  */
 
 #include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -30,12 +33,36 @@
 int endian;
 
 
-/* getendian() -- Determine endianness of machine.
+/* die() -- Print error message and exit.
+ *
+ * Args:
+ *     fmt - printf() style format strings
  *
  * Returns:
- *    1 if big endian
- *    0 if little endian
- *    -1 if something went wrong
+ *     Nothing. Exits program with EXIT_FAILURE
+ */
+void die(const char *fmt, ...) {
+  va_list       va;
+  char          buf[1024];
+
+  va_start(va, fmt);
+  vsnprintf(buf, sizeof(buf), fmt, va);
+  va_end(va);
+
+  fprintf(stderr, "%s", buf);
+  exit(EXIT_FAILURE);
+}
+
+
+/* getendian() -- Determine endianness of machine.
+ *
+ * Args:
+ *    None
+ *
+ * Returns:
+ *     1 - if big endian
+ *     0 - if little endian
+ *    -1 - if something went wrong
  */
 int getendian() {
   union {
@@ -54,8 +81,13 @@ int getendian() {
 }
 
 
-/* pattern_create() -- Creates pattern.
- * TODO
+/* pattern_create() -- Creates pattern 'length' bytes long.
+ *
+ * Args:
+ *    length - length (in bytes) of pattern.
+ *
+ * Returns:
+ *    Pointer to string containing generated pattern.
  */
 char *pattern_create(unsigned int length) {
   int             i;
@@ -63,10 +95,8 @@ char *pattern_create(unsigned int length) {
   char            *out;
 
   out = malloc(length);
-  if (out == NULL) {
-    perror("malloc()");
-    exit(EXIT_FAILURE);
-  }
+  if (out == NULL)
+    die("malloc(): %s\n", strerror(errno));
 
   for (i = 0; i < length; i++) {
     out[i] = x[i % 3];
@@ -95,7 +125,13 @@ char *pattern_create(unsigned int length) {
 
 
 /* pattern_offset() - Calculate and output offset.
- * TODO
+ *
+ * Args:
+ *    pattern - Haystack to search
+ *    offset  - Needle within the haystack
+ *
+ * Returns:
+ *    Nothing. Prints offset (decimal) if found, otherwise prints "not found"
  */
 void pattern_offset(const char *pattern, const char *offset) {
   int         i, x;
@@ -112,10 +148,8 @@ void pattern_offset(const char *pattern, const char *offset) {
     curhex[2] = '\0';
     offsetlen = (strlen(offset) - 2) / 2;
     hexoffset = malloc(offsetlen);
-    if (hexoffset == NULL) {
-      perror("malloc()");
-      exit(EXIT_FAILURE);
-    }
+    if (hexoffset == NULL)
+      die("malloc(): %s\n", strerror(errno));
 
     for(x = 0, i = 2; i < strlen(offset); x++, i += 2) {
       if (strlen(offset) % 2 == 1 && i == 2) {
@@ -152,7 +186,7 @@ void pattern_offset(const char *pattern, const char *offset) {
   if (optr != NULL)
     printf("%ld\n", optr - pattern);
   else
-    printf("not found\n");
+    die("not found\n");
 
   if (hexoffset)
     free(hexoffset);
@@ -170,7 +204,7 @@ int main(int argc, char *argv[]) {
   endian = getendian();
   if (endian == -1) {
     fprintf(stderr, "Unable to determine endianness. Toggle with -e\n");
-    endian = 0; /* default to little endian */
+    endian = 0; /* Default to little endian */
   }
 
   while((opt = getopt(argc, argv, "eo:")) != -1) {

@@ -1,5 +1,5 @@
 pattern:
-	gcc -o pattern pattern.c
+	gcc -Wall -o pattern pattern.c
 
 clean:
 	rm -rf pattern *~

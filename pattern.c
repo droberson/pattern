@@ -151,8 +151,9 @@ int main(int argc, char *argv[]) {
 
       for(x = 0, i = 2; i < strlen(offset); x++, i += 2) {
         if (strlen(offset) % 2 == 1 && i == 2) {
-          // offset length is odd, so assume that missing byte is 0
-          // and realign incrementor
+          /* Offset length is odd. Assume that the missing byte
+           * is 0 (Ex: 0xf == 0x0f) and realign the incrementor.
+           */
           curhex[0] = '0';
           curhex[1] = offset[i];
           i--;
@@ -161,9 +162,10 @@ int main(int argc, char *argv[]) {
           curhex[1] = offset[i + 1];
         }
 
-        // reversed for little endian.
-        // TODO: detect endianness
-        buf[offsetlen - x - 1] = strtol(curhex, &hexbyte, 16);
+        if (endian == 0)
+          buf[offsetlen - x - 1] = strtol(curhex, &hexbyte, 16);
+        else
+          buf[x] = strtol(curhex, &hexbyte, 16);
       }
     }
 

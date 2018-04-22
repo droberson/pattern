@@ -186,6 +186,9 @@ void pattern_offset(const char *pattern, const char *offset) {
         curhex[1] = offset[i + 1];
       }
 
+      if (isxdigit(curhex[0]) == 0 || isxdigit(curhex[1]) == 0)
+        die("Not hexadecimal: %s\n", curhex);
+
       byte = strtol(curhex, NULL, 16);
       if (endian == 0)
         hexoffset[offsetlen - x - 1] = byte;
